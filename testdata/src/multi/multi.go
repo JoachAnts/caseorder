@@ -9,7 +9,7 @@ func multi(x int) {
 
 func multi2(x int) {
 	switch x {
-	case 5: // want "case 1 should come before 5"
-	case 10, 20, 1: // want "case value 1 should come before 20"
+	case 5:
+	case 10, 20, 1: // want "case value 1 should come before 20" "case 1 should come before 5"
 	}
 }

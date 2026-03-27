@@ -19,6 +19,11 @@ var Analyzer = &analysis.Analyzer{
 	Run:  run,
 }
 
+// New is required for golangci-lint compatibility.
+func New(conf any) ([]*analysis.Analyzer, error) {
+	return []*analysis.Analyzer{Analyzer}, nil
+}
+
 func run(pass *analysis.Pass) (interface{}, error) {
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(n ast.Node) bool {

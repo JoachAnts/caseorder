@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/JoachAnts/switch-order/switchorder"
+	"github.com/JoachAnts/switch-order"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
