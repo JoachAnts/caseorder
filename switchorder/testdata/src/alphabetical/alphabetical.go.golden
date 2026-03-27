@@ -1,0 +1,8 @@
+package alphabetical
+
+func alphabetical(x string) {
+	switch x {
+	case "apple":
+	case "banana":
+	}
+}

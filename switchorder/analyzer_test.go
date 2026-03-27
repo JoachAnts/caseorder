@@ -9,10 +9,15 @@ import (
 
 func TestSwitchOrderAlphabetical(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, switchorder.Analyzer, "alphabetical")
+	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "alphabetical")
 }
 
 func TestSwitchOrderNumerical(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.Run(t, testdata, switchorder.Analyzer, "numbers")
+}
+
+func TestSwitchOrderMulti(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, switchorder.Analyzer, "multi")
 }
