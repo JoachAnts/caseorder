@@ -13,9 +13,9 @@ func numbers() {
 	case 1.1:
 	}
 
-	switch 'a' {
-	case 'a':
-	case 'b':
-	case 'c':
-	}
+	switch 0xFFE {
+    case 0x0:
+    case 0xA2:
+    case 0xFFE:
+    }
 }
