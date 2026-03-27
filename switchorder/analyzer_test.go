@@ -7,7 +7,12 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-func TestSwitchOrder(t *testing.T) {
+func TestSwitchOrderAlphabetical(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, switchorder.Analyzer, "a")
+	analysistest.Run(t, testdata, switchorder.Analyzer, "alphabetical")
+}
+
+func TestSwitchOrderNumerical(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.Run(t, testdata, switchorder.Analyzer, "numbers")
 }

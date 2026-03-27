@@ -2,7 +2,6 @@ package switchorder
 
 import (
 	"go/ast"
-	"go/token"
 
 	"golang.org/x/tools/go/analysis"
 )
@@ -29,11 +28,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 					continue
 				}
 
-				// Only handle single string literals for simplicity
 				bl, ok := caseClause.List[0].(*ast.BasicLit)
-				if !ok || bl.Kind != token.STRING {
-					continue
-				}
 
 				current := bl.Value
 
