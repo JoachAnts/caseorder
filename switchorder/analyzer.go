@@ -141,29 +141,20 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 	}
 
 	// --- Build new body ---
-	var newList []ast.Stmt
+	var parts []string
 	for _, c := range cases {
-		newList = append(newList, c.clause)
+		var buf bytes.Buffer
+		if err := format.Node(&buf, pass.Fset, c.clause); err == nil {
+			parts = append(parts, buf.String())
+		}
 	}
 	if defaultCase != nil {
-		newList = append(newList, defaultCase)
+		var buf bytes.Buffer
+		if err := format.Node(&buf, pass.Fset, defaultCase); err == nil {
+			parts = append(parts, buf.String())
+		}
 	}
-
-	var buf bytes.Buffer
-	// Format a dummy block to get standard indentation
-	if err := format.Node(&buf, pass.Fset, &ast.BlockStmt{List: newList}); err != nil {
-		return
-	}
-
-	s := buf.String()
-	// s is "{\n\tcase ...\n\tcase ...\n}"
-	lines := strings.Split(s, "\n")
-	if len(lines) < 2 {
-		return
-	}
-	content := strings.Join(lines[1:len(lines)-1], "\n")
-	content = strings.TrimLeft(content, "\n")
-	content = strings.TrimRight(content, "\n")
+	content := strings.Join(parts, "\n")
 
 	fix := analysis.SuggestedFix{
 		Message: "reorder switch cases",
