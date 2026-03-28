@@ -1,0 +1,11 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - switchorder
+  settings:
+    custom:
+      switchorder:
+        type: "module"
+        description: Enforces ordering of switch blocks

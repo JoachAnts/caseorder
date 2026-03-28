@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/images/gopher_switchorder.png" alt="switch-order gopher" width="400"/>
+  <img src="assets/images/gopher_switchorder.png" alt="switchorder gopher" width="400"/>
 </p>
 
-# switch-order
+# switchorder
 
 A Go linter that enforces consistent ordering of `switch` case statements — alphabetically for strings, numerically for integers and floats.
 
@@ -35,7 +35,7 @@ It also handles integers, floats, hex literals, negative numbers, multi-value ca
 ## Installation
 
 ```sh
-go install github.com/JoachAnts/switch-order/cmd/switchorder@latest
+go install github.com/JoachAnts/switchorder/cmd/switchorder@latest
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ linters-settings:
     switchorder:
       path: switchorder.so
       description: Enforces ordered switch case statements
-      original-url: github.com/JoachAnts/switch-order
+      original-url: github.com/JoachAnts/switchorder
       settings:
         order: asc
         comparators:

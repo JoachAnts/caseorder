@@ -1,4 +1,4 @@
-module github.com/JoachAnts/switch-order
+module github.com/JoachAnts/switchorder
 
 go 1.26.1
 

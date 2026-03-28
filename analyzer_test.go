@@ -3,7 +3,7 @@ package switchorder_test
 import (
 	"testing"
 
-	switchorder "github.com/JoachAnts/switch-order"
+	"github.com/JoachAnts/switchorder"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

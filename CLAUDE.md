@@ -23,7 +23,7 @@ go test -v ./...
 
 ## Architecture
 
-`switch-order` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis` and can be used standalone or via golangci-lint.
+`switchorder` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis` and can be used standalone or via golangci-lint.
 
 **Entry points:**
 - `analyzer.go` — Core logic: AST walking, grouping, sorting, and fix generation
