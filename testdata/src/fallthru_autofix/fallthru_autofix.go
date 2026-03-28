@@ -1,4 +1,4 @@
-package fallthru
+package fallthru_autofix
 
 func fallthru(x string) {
 	switch x {
