@@ -21,7 +21,7 @@ func TestSwitchOrderWithFallthrough(t *testing.T) {
 func TestSwitchOrderWithFallthroughAutofix(t *testing.T) {
 	cfg := switchorder.DefaultConfig()
 	cfg.Autofix.AllowFallthrough = true
-	a := switchorder.NewWithConfig(cfg)
+	a := switchorder.NewWithConfig(&cfg)
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, a, "fallthru_autofix")
 }

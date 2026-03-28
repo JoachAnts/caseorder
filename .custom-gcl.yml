@@ -1,0 +1,4 @@
+version: v2.11.4
+plugins:
+  - module: 'github.com/JoachAnts/switchorder'
+    path: ./

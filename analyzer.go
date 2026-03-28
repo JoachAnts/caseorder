@@ -50,7 +50,10 @@ func DefaultConfig() Config {
 	}
 }
 
-var Analyzer = NewWithConfig(DefaultConfig())
+var (
+	defaultCfg = DefaultConfig()
+	Analyzer   = NewWithConfig(&defaultCfg)
+)
 
 // New is required for golangci-lint compatibility.
 func New(conf any) ([]*analysis.Analyzer, error) {
@@ -64,11 +67,13 @@ func New(conf any) ([]*analysis.Analyzer, error) {
 			return nil, fmt.Errorf("switchorder: unmarshal config: %w", err)
 		}
 	}
-	return []*analysis.Analyzer{NewWithConfig(cfg)}, nil
+	return []*analysis.Analyzer{NewWithConfig(&cfg)}, nil
 }
 
-// NewWithConfig creates an analyzer with the given configuration.
-func NewWithConfig(cfg Config) *analysis.Analyzer {
+// NewWithConfig creates an analyzer with the given configuration pointer.
+// Flags registered on the returned analyzer's FlagSet write directly into cfg,
+// so their values are visible to Run without any extra wiring.
+func NewWithConfig(cfg *Config) *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name: "switchorder",
 		Doc:  "checks that switch case statements are in alphabetical or numerical order",
@@ -76,15 +81,17 @@ func NewWithConfig(cfg Config) *analysis.Analyzer {
 	}
 }
 
-func makeRun(cfg Config) func(*analysis.Pass) (interface{}, error) {
+func makeRun(cfg *Config) func(*analysis.Pass) (interface{}, error) {
 	return func(pass *analysis.Pass) (interface{}, error) {
+		// Snapshot config once per Run call, after flags have been parsed.
+		c := *cfg
 		for _, file := range pass.Files {
 			ast.Inspect(file, func(n ast.Node) bool {
 				switchStmt, ok := n.(*ast.SwitchStmt)
 				if !ok {
 					return true
 				}
-				processSwitch(pass, switchStmt, cfg)
+				processSwitch(pass, switchStmt, c)
 				return true
 			})
 		}
