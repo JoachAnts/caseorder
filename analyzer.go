@@ -52,7 +52,6 @@ type caseClauseInfo struct {
 
 func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 	var cases []caseClauseInfo
-	var defaultCase *ast.CaseClause
 
 	// --- Collect cases ---
 	for _, stmt := range sw.Body.List {
@@ -61,29 +60,18 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 			return
 		}
 
-		// default case
-		if cc.List == nil {
-			defaultCase = cc
-			continue
-		}
-
 		var values []valueInfo
-		for _, expr := range cc.List {
-			bl, ok := expr.(*ast.BasicLit)
-			if !ok || (bl.Kind != token.STRING && bl.Kind != token.INT && bl.Kind != token.FLOAT && bl.Kind != token.CHAR) {
-				return
-			}
-			values = append(values, valueInfo{
-				expr: expr,
-				lit:  bl,
-				val:  constant.MakeFromLiteral(bl.Value, bl.Kind, 0),
-			})
-		}
-
-		// Skip if fallthrough exists (unsafe to reorder)
-		for _, stmt := range cc.Body {
-			if br, ok := stmt.(*ast.BranchStmt); ok && br.Tok == token.FALLTHROUGH {
-				return
+		if cc.List != nil {
+			for _, expr := range cc.List {
+				bl, ok := expr.(*ast.BasicLit)
+				if !ok || (bl.Kind != token.STRING && bl.Kind != token.INT && bl.Kind != token.FLOAT && bl.Kind != token.CHAR) {
+					return
+				}
+				values = append(values, valueInfo{
+					expr: expr,
+					lit:  bl,
+					val:  constant.MakeFromLiteral(bl.Value, bl.Kind, 0),
+				})
 			}
 		}
 
@@ -97,17 +85,27 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 		return
 	}
 
+	// --- Divide into groups connected by fallthrough ---
+	var groups [][]caseClauseInfo
+	var currentGroup []caseClauseInfo
+	for i, c := range cases {
+		currentGroup = append(currentGroup, c)
+		if !endsWithFallthrough(c.clause) || i == len(cases)-1 {
+			groups = append(groups, currentGroup)
+			currentGroup = nil
+		}
+	}
+
 	changed := false
 	var diagnostics []analysis.Diagnostic
 
-	// --- Check and Fix within each case ---
+	// --- Check and Fix within each case (sorting values) ---
 	for i := range cases {
 		if len(cases[i].values) < 2 {
 			continue
 		}
 		if !isSorted(cases[i].values) {
 			changed = true
-			// Report first out-of-order value
 			for j := 1; j < len(cases[i].values); j++ {
 				if constant.Compare(cases[i].values[j-1].val, token.GTR, cases[i].values[j].val) {
 					diagnostics = append(diagnostics, analysis.Diagnostic{
@@ -126,19 +124,20 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 		}
 	}
 
-	// --- Check and Fix across cases ---
-	if !isCasesSorted(cases) {
+	// --- Check and Fix across groups ---
+	if !isGroupsSorted(groups) {
 		changed = true
-		for i := 1; i < len(cases); i++ {
-			if constant.Compare(cases[i-1].values[0].val, token.GTR, cases[i].values[0].val) {
+		for i := 1; i < len(groups); i++ {
+			if isLess(groups[i], groups[i-1]) {
+				msg := fmt.Sprintf("case %s should come before %s", groupLabel(groups[i]), groupLabel(groups[i-1]))
 				diagnostics = append(diagnostics, analysis.Diagnostic{
-					Pos:     cases[i].clause.Pos(),
-					End:     cases[i].clause.End(),
-					Message: fmt.Sprintf("case %s should come before %s", cases[i].values[0].lit.Value, cases[i-1].values[0].lit.Value),
+					Pos:     groups[i][0].clause.Pos(),
+					End:     groups[i][0].clause.End(),
+					Message: msg,
 				})
 			}
 		}
-		sortCases(cases)
+		sortGroups(groups)
 	}
 
 	if !changed {
@@ -147,16 +146,12 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 
 	// --- Build new body ---
 	var parts []string
-	for _, c := range cases {
-		var buf bytes.Buffer
-		if err := format.Node(&buf, pass.Fset, c.clause); err == nil {
-			parts = append(parts, buf.String())
-		}
-	}
-	if defaultCase != nil {
-		var buf bytes.Buffer
-		if err := format.Node(&buf, pass.Fset, defaultCase); err == nil {
-			parts = append(parts, buf.String())
+	for _, g := range groups {
+		for _, c := range g {
+			var buf bytes.Buffer
+			if err := format.Node(&buf, pass.Fset, c.clause); err == nil {
+				parts = append(parts, buf.String())
+			}
 		}
 	}
 	content := strings.Join(parts, "\n")
@@ -178,6 +173,33 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 	}
 }
 
+func endsWithFallthrough(cc *ast.CaseClause) bool {
+	if len(cc.Body) == 0 {
+		return false
+	}
+	last := cc.Body[len(cc.Body)-1]
+	br, ok := last.(*ast.BranchStmt)
+	return ok && br.Tok == token.FALLTHROUGH
+}
+
+func isLess(a, b []caseClauseInfo) bool {
+	// A group starting with default is considered "larger" than any group with values.
+	if len(b[0].values) == 0 {
+		return len(a[0].values) > 0
+	}
+	if len(a[0].values) == 0 {
+		return false
+	}
+	return constant.Compare(a[0].values[0].val, token.LSS, b[0].values[0].val)
+}
+
+func groupLabel(g []caseClauseInfo) string {
+	if len(g[0].values) == 0 {
+		return "default"
+	}
+	return g[0].values[0].lit.Value
+}
+
 func isSorted(values []valueInfo) bool {
 	for i := 1; i < len(values); i++ {
 		if constant.Compare(values[i-1].val, token.GTR, values[i].val) {
@@ -193,17 +215,17 @@ func sortValues(values []valueInfo) {
 	})
 }
 
-func isCasesSorted(cases []caseClauseInfo) bool {
-	for i := 1; i < len(cases); i++ {
-		if constant.Compare(cases[i-1].values[0].val, token.GTR, cases[i].values[0].val) {
+func isGroupsSorted(groups [][]caseClauseInfo) bool {
+	for i := 1; i < len(groups); i++ {
+		if isLess(groups[i], groups[i-1]) {
 			return false
 		}
 	}
 	return true
 }
 
-func sortCases(cases []caseClauseInfo) {
-	sort.Slice(cases, func(i, j int) bool {
-		return constant.Compare(cases[i].values[0].val, token.LSS, cases[j].values[0].val)
+func sortGroups(groups [][]caseClauseInfo) {
+	sort.Slice(groups, func(i, j int) bool {
+		return isLess(groups[i], groups[j])
 	})
 }

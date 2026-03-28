@@ -12,6 +12,11 @@ func TestSwitchOrderAlphabetical(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "alphabetical")
 }
 
+func TestSwitchOrderWithFallthrough(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "fallthru")
+}
+
 func TestSwitchOrderNumerical(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "numbers")
