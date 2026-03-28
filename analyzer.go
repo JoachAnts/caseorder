@@ -50,6 +50,38 @@ type caseClauseInfo struct {
 	values []valueInfo
 }
 
+func getValue(expr ast.Expr) (*ast.BasicLit, constant.Value, bool) {
+	switch e := expr.(type) {
+	case *ast.BasicLit:
+		if e.Kind == token.STRING || e.Kind == token.INT || e.Kind == token.FLOAT || e.Kind == token.CHAR {
+			return e, constant.MakeFromLiteral(e.Value, e.Kind, 0), true
+		}
+	case *ast.UnaryExpr:
+		if bl, ok := e.X.(*ast.BasicLit); ok {
+			if bl.Kind == token.INT || bl.Kind == token.FLOAT {
+				val := constant.MakeFromLiteral(bl.Value, bl.Kind, 0)
+				if e.Op == token.SUB {
+					val = constant.UnaryOp(token.SUB, val, 0)
+				}
+				return bl, val, true
+			}
+		}
+	}
+	return nil, nil, false
+}
+
+func getLitValueString(expr ast.Expr) string {
+	switch e := expr.(type) {
+	case *ast.BasicLit:
+		return e.Value
+	case *ast.UnaryExpr:
+		if bl, ok := e.X.(*ast.BasicLit); ok {
+			return fmt.Sprintf("%s%s", e.Op, bl.Value)
+		}
+	}
+	return ""
+}
+
 func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 	var cases []caseClauseInfo
 
@@ -63,14 +95,14 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 		var values []valueInfo
 		if cc.List != nil {
 			for _, expr := range cc.List {
-				bl, ok := expr.(*ast.BasicLit)
-				if !ok || (bl.Kind != token.STRING && bl.Kind != token.INT && bl.Kind != token.FLOAT && bl.Kind != token.CHAR) {
+				lit, val, ok := getValue(expr)
+				if !ok {
 					return
 				}
 				values = append(values, valueInfo{
 					expr: expr,
-					lit:  bl,
-					val:  constant.MakeFromLiteral(bl.Value, bl.Kind, 0),
+					lit:  lit,
+					val:  val,
 				})
 			}
 		}
@@ -111,7 +143,7 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 					diagnostics = append(diagnostics, analysis.Diagnostic{
 						Pos:     cases[i].values[j].expr.Pos(),
 						End:     cases[i].values[j].expr.End(),
-						Message: fmt.Sprintf("case value %s should come before %s", cases[i].values[j].lit.Value, cases[i].values[j-1].lit.Value),
+						Message: fmt.Sprintf("case value %s should come before %s", getLitValueString(cases[i].values[j].expr), getLitValueString(cases[i].values[j-1].expr)),
 					})
 				}
 			}
@@ -129,7 +161,9 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 		changed = true
 		for i := 1; i < len(groups); i++ {
 			if isLess(groups[i], groups[i-1]) {
-				msg := fmt.Sprintf("case %s should come before %s", groupLabel(groups[i]), groupLabel(groups[i-1]))
+				label := groupLabel(groups[i])
+				prevLabel := groupLabel(groups[i-1])
+				msg := fmt.Sprintf("case %s should come before %s", label, prevLabel)
 				diagnostics = append(diagnostics, analysis.Diagnostic{
 					Pos:     groups[i][0].clause.Pos(),
 					End:     groups[i][0].clause.End(),
@@ -145,16 +179,30 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt) {
 	}
 
 	// --- Build new body ---
-	var parts []string
+	var newList []ast.Stmt
 	for _, g := range groups {
 		for _, c := range g {
-			var buf bytes.Buffer
-			if err := format.Node(&buf, pass.Fset, c.clause); err == nil {
-				parts = append(parts, buf.String())
-			}
+			// Clone to reset position and avoid sparse formatting in go/format
+			cloned := *c.clause
+			cloned.Case = token.NoPos
+			newList = append(newList, &cloned)
 		}
 	}
-	content := strings.Join(parts, "\n")
+
+	var buf bytes.Buffer
+	// Format a dummy block to get standard indentation and spacing
+	if err := format.Node(&buf, pass.Fset, &ast.BlockStmt{List: newList}); err != nil {
+		return
+	}
+
+	s := buf.String()
+	// s is "{\n\tcase ...\n\tcase ...\n}"
+	lines := strings.Split(s, "\n")
+	if len(lines) < 2 {
+		return
+	}
+	// content will be the lines between { and }
+	content := strings.Join(lines[1:len(lines)-1], "\n")
 
 	fix := analysis.SuggestedFix{
 		Message: "reorder switch cases",
@@ -197,7 +245,7 @@ func groupLabel(g []caseClauseInfo) string {
 	if len(g[0].values) == 0 {
 		return "default"
 	}
-	return g[0].values[0].lit.Value
+	return getLitValueString(g[0].values[0].expr)
 }
 
 func isSorted(values []valueInfo) bool {
@@ -225,7 +273,7 @@ func isGroupsSorted(groups [][]caseClauseInfo) bool {
 }
 
 func sortGroups(groups [][]caseClauseInfo) {
-	sort.Slice(groups, func(i, j int) bool {
+	sort.SliceStable(groups, func(i, j int) bool {
 		return isLess(groups[i], groups[j])
 	})
 }

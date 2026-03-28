@@ -31,3 +31,8 @@ func TestSwitchOrderLarge(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "large")
 }
+
+func TestSwitchOrderEdgeCases(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, switchorder.Analyzer, "edgecases")
+}
