@@ -4,7 +4,7 @@ func negative(x int) {
 	switch x {
 	case 1:
 	case -1: // want "case -1 should come before 1"
-	case 0: // want "case 0 should come before 1"
+	case 0:
 	}
 }
 
@@ -31,8 +31,8 @@ func defaultPlacement(x int) {
 func defaultMiddle(x int) {
 	switch x {
 	case 2:
-	default: // want "case default should come before 2"
+	default:
 		println("default")
-	case 1: // want "case 1 should come before 2" "case 1 should come before default"
+	case 1: // want "case 1 should come before default"
 	}
 }

@@ -6,13 +6,24 @@ import (
 	"fmt"
 	"go/ast"
 	"go/constant"
-	"go/format"
 	"go/token"
+	"os"
 	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
 )
+
+// AnalyzerPlugin is the required export for golangci-lint
+type AnalyzerPlugin struct{}
+
+func (p AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
+	return []*analysis.Analyzer{
+		NewWithConfig(&Config{}), // Your logic here
+	}
+}
+
+var Instance AnalyzerPlugin
 
 // Config holds configuration for the switchorder analyzer.
 type Config struct {
@@ -365,36 +376,7 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt, cfg Config) {
 	// --- Build suggested fix ---
 	var fix *analysis.SuggestedFix
 	if cfg.Autofix.Enabled && (!hasFallthroughGroups(groups) || cfg.Autofix.AllowFallthrough) {
-		var newList []ast.Stmt
-		for _, g := range groups {
-			for _, c := range g {
-				// Clone to reset position and avoid sparse formatting in go/format
-				cloned := *c.clause
-				cloned.Case = token.NoPos
-				newList = append(newList, &cloned)
-			}
-		}
-
-		var buf bytes.Buffer
-		if err := format.Node(&buf, pass.Fset, &ast.BlockStmt{List: newList}); err == nil {
-			s := buf.String()
-			// s is "{\n\tcase ...\n\tcase ...\n}"
-			lines := strings.Split(s, "\n")
-			if len(lines) >= 2 {
-				// content will be the lines between { and }
-				content := strings.Join(lines[1:len(lines)-1], "\n")
-				fix = &analysis.SuggestedFix{
-					Message: "reorder switch cases",
-					TextEdits: []analysis.TextEdit{
-						{
-							Pos:     sw.Body.Lbrace + 1,
-							End:     sw.Body.Rbrace,
-							NewText: []byte("\n" + content + "\n"),
-						},
-					},
-				}
-			}
-		}
+		fix = buildFix(pass, sw, cases, groups)
 	}
 
 	for _, d := range diagnostics {
@@ -402,6 +384,105 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt, cfg Config) {
 			d.SuggestedFixes = []analysis.SuggestedFix{*fix}
 		}
 		pass.Report(d)
+	}
+}
+
+// lineStartOffset returns the offset of the first character on the line
+// containing src[off] (i.e., the character right after the preceding newline).
+func lineStartOffset(src []byte, off int) int {
+	for off > 0 && src[off-1] != '\n' {
+		off--
+	}
+	return off
+}
+
+// buildFix constructs a SuggestedFix that rewrites the switch body in sorted
+// order. It uses source-text extraction for case bodies so that comments are
+// preserved, and reconstructs headers from the (potentially value-sorted) AST.
+func buildFix(pass *analysis.Pass, sw *ast.SwitchStmt, cases []caseClauseInfo, groups [][]caseClauseInfo) *analysis.SuggestedFix {
+	tf := pass.Fset.File(sw.Body.Pos())
+	src, err := os.ReadFile(tf.Name())
+	if err != nil {
+		return nil
+	}
+
+	n := len(cases)
+	origClauses := make([]*ast.CaseClause, n)
+	for i, c := range cases {
+		origClauses[i] = c.clause
+	}
+
+	// Detect case indentation from the first clause's line.
+	firstOff := tf.Offset(origClauses[0].Pos())
+	caseIndent := string(src[lineStartOffset(src, firstOff):firstOff])
+
+	// Compute where each clause's body ends in the source (= start of next
+	// clause's line, or start of the closing-brace line for the last clause).
+	rbraceOff := tf.Offset(sw.Body.Rbrace)
+	rbraceLineStart := lineStartOffset(src, rbraceOff)
+	bodyEnds := make([]int, n)
+	for i := 0; i < n-1; i++ {
+		nextOff := tf.Offset(origClauses[i+1].Pos())
+		bodyEnds[i] = lineStartOffset(src, nextOff)
+	}
+	bodyEnds[n-1] = rbraceLineStart
+
+	// Map clause pointer → original index for quick lookup.
+	origIdx := make(map[*ast.CaseClause]int, n)
+	for i, oc := range origClauses {
+		origIdx[oc] = i
+	}
+
+	// Collect sorted clauses from the (already sorted) groups.
+	var sortedClauses []*ast.CaseClause
+	for _, g := range groups {
+		for _, c := range g {
+			sortedClauses = append(sortedClauses, c.clause)
+		}
+	}
+
+	var buf bytes.Buffer
+	buf.WriteByte('\n')
+	for _, sc := range sortedClauses {
+		idx := origIdx[sc]
+
+		// Write the case header from the AST (reflects any value-sorting).
+		if sc.List == nil {
+			buf.WriteString(caseIndent)
+			buf.WriteString("default:")
+		} else {
+			buf.WriteString(caseIndent)
+			buf.WriteString("case ")
+			for k, expr := range sc.List {
+				if k > 0 {
+					buf.WriteString(", ")
+				}
+				buf.WriteString(getLitValueString(expr))
+			}
+			buf.WriteByte(':')
+		}
+
+		// Write the body from the original source, starting at the newline
+		// that ends the case header line (skipping any inline comment such as
+		// "// want ...").
+		colonOff := tf.Offset(sc.Colon)
+		bodyStart := colonOff + 1
+		for bodyStart < len(src) && src[bodyStart] != '\n' {
+			bodyStart++
+		}
+		buf.Write(src[bodyStart:bodyEnds[idx]])
+	}
+
+	// Preserve the indentation before the closing brace.
+	buf.Write(src[rbraceLineStart:rbraceOff])
+
+	return &analysis.SuggestedFix{
+		Message: "reorder switch cases",
+		TextEdits: []analysis.TextEdit{{
+			Pos:     sw.Body.Lbrace + 1,
+			End:     sw.Body.Rbrace,
+			NewText: buf.Bytes(),
+		}},
 	}
 }
 

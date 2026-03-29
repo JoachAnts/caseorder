@@ -9,3 +9,4 @@ linters:
       switchorder:
         type: "module"
         description: Enforces ordering of switch blocks
+        path: switchorder

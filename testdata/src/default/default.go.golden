@@ -1,0 +1,19 @@
+package _default
+
+func defaultPlacement(x int) {
+	switch x {
+	case 1:
+	case 2:
+	default:
+		println("default")
+	}
+}
+
+func defaultMiddle(x int) {
+	switch x {
+	case 1:
+	case 2:
+	default:
+		println("default")
+	}
+}
