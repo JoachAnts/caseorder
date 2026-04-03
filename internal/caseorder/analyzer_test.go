@@ -46,6 +46,13 @@ func TestSwitchOrderDefault(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "default")
 }
 
+func TestOverlap(t *testing.T) {
+	testdata := analysistest.TestData()
+	// Expression switches (no tag) have conditions that can overlap — reordering
+	// would change behaviour. The analyzer must not emit any diagnostics.
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "expressions")
+}
+
 func TestNegativeNumbers(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "negative")
