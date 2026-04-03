@@ -46,9 +46,14 @@ func TestSwitchOrderDefault(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "default")
 }
 
-func TestSwitchOrderEdgeCases(t *testing.T) {
+func TestNegativeNumbers(t *testing.T) {
 	testdata := analysistest.TestData()
-	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "edgecases")
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "negative")
+}
+
+func TestComments(t *testing.T) {
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "comments")
 }
 
 func TestDescendingStrings(t *testing.T) {

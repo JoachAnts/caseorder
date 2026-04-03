@@ -1,0 +1,9 @@
+package negative
+
+func negative(x int) {
+	switch x {
+	case -1:
+	case 0:
+	case 1:
+	}
+}
