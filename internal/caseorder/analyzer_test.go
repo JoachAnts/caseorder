@@ -3,7 +3,7 @@ package caseorder_test
 import (
 	"testing"
 
-	"github.com/JoachAnts/caseorder"
+	"github.com/JoachAnts/caseorder/internal/caseorder"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 

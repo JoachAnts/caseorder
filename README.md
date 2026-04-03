@@ -7,7 +7,7 @@ I built this while working on a Game Boy emulator. The CPU instruction set has 5
 ## Install
 
 ```sh
-go install github.com/JoachAnts/caseorder/cmd/caseorder@latest
+go install github.com/JoachAnts/caseorder@latest
 ```
 
 ## Usage

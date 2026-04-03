@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Build the CLI binary
-go build ./cmd/caseorder
+go build .
 
 # Run all tests
 go test ./...
 
 # Run a single test
-go test -run TestAlphabetical ./...
+go test -run TestAlphabetical ./internal/caseorder
 
 # Run tests with verbose output
 go test -v ./...
@@ -23,11 +23,11 @@ go test -v ./...
 
 ## Architecture
 
-`caseorder` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis` and can be used standalone or via golangci-lint.
+`caseorder` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis`.
 
 **Entry points:**
-- `analyzer.go` — Core logic: AST walking, grouping, sorting, and fix generation
-- `cmd/caseorder/main.go` — CLI wrapper using `singlechecker.Main()`
+- `main.go` — CLI entry point using `singlechecker.Main()`
+- `internal/caseorder/analyzer.go` — Core logic: AST walking, grouping, sorting, and fix generation
 
 **Analysis flow:**
 1. Walk AST for `SwitchStmt` nodes
@@ -39,6 +39,6 @@ go test -v ./...
 
 **Value extraction** (`getValue`): Handles `BasicLit` (strings, ints, floats, chars) and `UnaryExpr` for negatives (e.g., `-1`). Uses `constant.Value` for type-agnostic comparison.
 
-**Testdata** (`testdata/src/`): Each subdirectory (`alphabetical`, `numbers`, `fallthru`, `multi`, `large`, `edgecases`) is an independent package used by `analysistest.Run`. The `// want` comments in those files declare expected diagnostics.
+**Testdata** (`internal/caseorder/testdata/src/`): Each subdirectory (`alphabetical`, `numbers`, `fallthru`, `multi`, `large`, `edgecases`) is an independent package used by `analysistest.Run`. The `// want` comments in those files declare expected diagnostics.
 
 **golangci-lint integration**: The public `New()` function (added in commit `b9e36bd`) exposes the analyzer for use as a plugin.
