@@ -385,21 +385,6 @@ func lineStartOffset(src []byte, off int) int {
 	return off
 }
 
-// isPreCaseCommentLine reports whether line (without its trailing newline) is
-// at exactly case-indent level: it starts with caseIndent followed immediately
-// by a non-whitespace character, indicating a comment that belongs to the
-// following case rather than the body of the preceding one.
-func isPreCaseCommentLine(line []byte, caseIndent string) bool {
-	if len(line) <= len(caseIndent) {
-		return false
-	}
-	if !bytes.HasPrefix(line, []byte(caseIndent)) {
-		return false
-	}
-	next := line[len(caseIndent)]
-	return next != ' ' && next != '\t'
-}
-
 // buildFix constructs a SuggestedFix that rewrites the switch body in sorted
 // order. It uses source-text extraction for case bodies so that comments are
 // preserved, and reconstructs headers from the (potentially value-sorted) AST.
@@ -420,13 +405,30 @@ func buildFix(pass *analysis.Pass, sw *ast.SwitchStmt, cases []caseClauseInfo, g
 	firstOff := tf.Offset(origClauses[0].Pos())
 	caseIndent := string(src[lineStartOffset(src, firstOff):firstOff])
 
+	// Detect body indentation from the first clause that has statements.
+	// Lines at body indent belong to the case above; everything else
+	// (including block comment interiors at other indentation) travels with
+	// the case below.
+	bodyIndent := caseIndent + "\t"
+	for _, oc := range origClauses {
+		if len(oc.Body) > 0 {
+			stmtOff := tf.Offset(oc.Body[0].Pos())
+			stmtLineStart := lineStartOffset(src, stmtOff)
+			if stmtLineStart < stmtOff {
+				bodyIndent = string(src[stmtLineStart:stmtOff])
+			}
+			break
+		}
+	}
+
 	rbraceOff := tf.Offset(sw.Body.Rbrace)
 	rbraceLineStart := lineStartOffset(src, rbraceOff)
 	lbraceOff := tf.Offset(sw.Body.Lbrace)
 
 	// For each clause, find where its pre-case comment block starts by walking
-	// backwards from the case keyword line, collecting lines at exactly
-	// case-indent level. These comments travel with the case when reordered.
+	// backwards from the case keyword line. Stop at blank lines or lines at
+	// body-indent level (case body content). Everything else — comments at
+	// case-indent level or block comment interiors — travels with the case.
 	preCaseStart := make([]int, n)
 	for i := 0; i < n; i++ {
 		caseLineStart := lineStartOffset(src, tf.Offset(origClauses[i].Pos()))
@@ -444,11 +446,11 @@ func buildFix(pass *analysis.Pass, sw *ast.SwitchStmt, cases []caseClauseInfo, g
 			if prevStart <= stopAt {
 				break
 			}
-			if isPreCaseCommentLine(src[prevStart:prevEnd], caseIndent) {
-				pos = prevStart
-			} else {
+			line := src[prevStart:prevEnd]
+			if len(line) == 0 || bytes.HasPrefix(line, []byte(bodyIndent)) {
 				break
 			}
+			pos = prevStart
 		}
 		preCaseStart[i] = pos
 	}
