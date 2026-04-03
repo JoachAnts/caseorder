@@ -49,6 +49,8 @@ case "orange":
 
 It also enforces ordering for integers, floats, hex literals, negative numbers, multi-value cases, and `fallthrough` chains.
 
+Type switches (`switch v := x.(type)`) are ignored — ordering types has no meaningful definition, so `caseorder` leaves them alone.
+
 ## Use cases
 
 **CI enforcement** — fail the build when switch cases are out of order:
