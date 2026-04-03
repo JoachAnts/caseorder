@@ -26,7 +26,7 @@ caseorder -fix ./...
 ## What it catches
 
 ```go
-// Bad — switch cases are out of alphabetical order
+// Before — switch cases are out of alphabetical order
 switch fruit {
 case "orange":
     // ...
@@ -36,7 +36,7 @@ case "banana": // want: case "banana" should come before "orange"
     // ...
 }
 
-// Good — cases sorted alphabetically
+// After — cases sorted alphabetically
 switch fruit {
 case "apple":
     // ...
@@ -61,19 +61,6 @@ caseorder ./... || exit 1
 
 ```sh
 caseorder -fix ./...
-```
-
-**Pre-commit hook** — add to `.git/hooks/pre-commit`:
-
-```sh
-#!/bin/sh
-caseorder ./...
-```
-
-**Ad-hoc audit** — check a subtree when reviewing unfamiliar code:
-
-```sh
-caseorder ./pkg/config/...
 ```
 
 **Descending order** — for switches where largest-first is conventional (e.g. priority levels, HTTP status codes):
