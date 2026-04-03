@@ -1,4 +1,4 @@
-module github.com/JoachAnts/switchorder
+module github.com/JoachAnts/caseorder
 
 go 1.26.1
 

@@ -1,4 +1,4 @@
-package switchorder
+package caseorder
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ func (p AnalyzerPlugin) GetAnalyzers() []*analysis.Analyzer {
 
 var Instance AnalyzerPlugin
 
-// Config holds configuration for the switchorder analyzer.
+// Config holds configuration for the caseorder analyzer.
 type Config struct {
 	Order       string        `json:"order"`
 	Comparators []Comparator  `json:"comparators"`
@@ -72,10 +72,10 @@ func New(conf any) ([]*analysis.Analyzer, error) {
 	if conf != nil {
 		data, err := json.Marshal(conf)
 		if err != nil {
-			return nil, fmt.Errorf("switchorder: marshal config: %w", err)
+			return nil, fmt.Errorf("caseorder: marshal config: %w", err)
 		}
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			return nil, fmt.Errorf("switchorder: unmarshal config: %w", err)
+			return nil, fmt.Errorf("caseorder: unmarshal config: %w", err)
 		}
 	}
 	return []*analysis.Analyzer{NewWithConfig(&cfg)}, nil
@@ -86,7 +86,7 @@ func New(conf any) ([]*analysis.Analyzer, error) {
 // so their values are visible to Run without any extra wiring.
 func NewWithConfig(cfg *Config) *analysis.Analyzer {
 	return &analysis.Analyzer{
-		Name: "switchorder",
+		Name: "caseorder",
 		Doc:  "checks that switch case statements are in alphabetical or numerical order",
 		Run:  makeRun(cfg),
 	}

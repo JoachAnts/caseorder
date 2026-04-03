@@ -1,4 +1,4 @@
-# switchorder
+# caseorder
 
 A Go linter that enforces consistent ordering of `switch` case statements — alphabetically for strings, numerically for integers and floats.
 
@@ -7,20 +7,20 @@ I built this while working on a Game Boy emulator. The CPU instruction set has 5
 ## Install
 
 ```sh
-go install github.com/JoachAnts/switchorder/cmd/switchorder@latest
+go install github.com/JoachAnts/caseorder/cmd/caseorder@latest
 ```
 
 ## Usage
 
 ```sh
 # Lint all packages in the current module
-switchorder ./...
+caseorder ./...
 
 # Lint a specific package
-switchorder ./internal/handlers
+caseorder ./internal/handlers
 
 # Apply suggested fixes automatically
-switchorder -fix ./...
+caseorder -fix ./...
 ```
 
 ## What it catches
@@ -54,32 +54,32 @@ It also handles integers, floats, hex literals, negative numbers, multi-value ca
 **Code review enforcement** — run in CI to catch unordered switches before they merge:
 
 ```sh
-switchorder ./... || exit 1
+caseorder ./... || exit 1
 ```
 
 **Auto-fix on save** — pipe through `gofmt`-style tooling or wire into your editor's on-save hook:
 
 ```sh
-switchorder -fix ./...
+caseorder -fix ./...
 ```
 
 **Pre-commit hook** — add to `.git/hooks/pre-commit`:
 
 ```sh
 #!/bin/sh
-switchorder ./...
+caseorder ./...
 ```
 
 **Ad-hoc audit** — check a single file or subtree when reviewing unfamiliar code:
 
 ```sh
-switchorder ./pkg/config/...
+caseorder ./pkg/config/...
 ```
 
 **Descending order** — for switches where largest-first is conventional (e.g. priority levels, HTTP status codes):
 
 ```sh
-switchorder -order=desc ./...
+caseorder -order=desc ./...
 ```
 
 ## Flags

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Build the CLI binary
-go build ./cmd/switchorder
+go build ./cmd/caseorder
 
 # Run all tests
 go test ./...
@@ -18,16 +18,16 @@ go test -run TestAlphabetical ./...
 go test -v ./...
 
 # Run the linter on a package
-./switchorder ./path/to/package
+./caseorder ./path/to/package
 ```
 
 ## Architecture
 
-`switchorder` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis` and can be used standalone or via golangci-lint.
+`caseorder` is a Go static analysis linter that enforces consistent ordering of switch case statements. It integrates with `golang.org/x/tools/go/analysis` and can be used standalone or via golangci-lint.
 
 **Entry points:**
 - `analyzer.go` — Core logic: AST walking, grouping, sorting, and fix generation
-- `cmd/switchorder/main.go` — CLI wrapper using `singlechecker.Main()`
+- `cmd/caseorder/main.go` — CLI wrapper using `singlechecker.Main()`
 
 **Analysis flow:**
 1. Walk AST for `SwitchStmt` nodes

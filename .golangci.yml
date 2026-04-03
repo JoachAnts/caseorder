@@ -3,10 +3,10 @@ version: "2"
 linters:
   default: none
   enable:
-    - switchorder
+    - caseorder
   settings:
     custom:
-      switchorder:
+      caseorder:
         type: "module"
         description: Enforces ordering of switch blocks
-        path: switchorder
+        path: caseorder
