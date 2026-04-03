@@ -65,13 +65,6 @@ func TestDescendingNumbers(t *testing.T) {
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "desc_numbers")
 }
 
-func TestDefaultFirst(t *testing.T) {
-	cfg := caseorder.DefaultConfig()
-	cfg.DefaultLast = false
-	testdata := analysistest.TestData()
-	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "default_first")
-}
-
 func TestCaseSensitive(t *testing.T) {
 	cfg := caseorder.DefaultConfig()
 	for i := range cfg.Comparators {
@@ -88,12 +81,4 @@ func TestNoAutofix(t *testing.T) {
 	cfg.Autofix.Enabled = false
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "no_autofix")
-}
-
-func TestDescendingDefaultFirst(t *testing.T) {
-	cfg := caseorder.DefaultConfig()
-	cfg.Order = "desc"
-	cfg.DefaultLast = false
-	testdata := analysistest.TestData()
-	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "desc_default_first")
 }

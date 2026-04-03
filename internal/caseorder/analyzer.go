@@ -29,7 +29,6 @@ var Instance AnalyzerPlugin
 type Config struct {
 	Order       string        `json:"order"`
 	Comparators []Comparator  `json:"comparators"`
-	DefaultLast bool          `json:"default-last"`
 	Autofix     AutofixConfig `json:"autofix"`
 }
 
@@ -53,7 +52,6 @@ func DefaultConfig() Config {
 			{Type: "numeric"},
 			{Type: "alphabetical", IgnoreCase: true},
 		},
-		DefaultLast: true,
 		Autofix: AutofixConfig{
 			Enabled:          true,
 			AllowFallthrough: false,
@@ -211,20 +209,11 @@ func groupLess(a, b []caseClauseInfo, cfg Config) bool {
 	aIsDefault := len(a[0].values) == 0
 	bIsDefault := len(b[0].values) == 0
 
-	if cfg.DefaultLast {
-		if bIsDefault {
-			return !aIsDefault
-		}
-		if aIsDefault {
-			return false
-		}
-	} else {
-		if aIsDefault {
-			return !bIsDefault
-		}
-		if bIsDefault {
-			return false
-		}
+	if bIsDefault {
+		return !aIsDefault
+	}
+	if aIsDefault {
+		return false
 	}
 
 	return valueLess(a[0].values[0], b[0].values[0], cfg)

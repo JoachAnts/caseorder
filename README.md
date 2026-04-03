@@ -77,7 +77,6 @@ caseorder -order=desc ./...
 |------|---------|-------------|
 | `-order` | `asc` | Sort direction: `asc` or `desc` |
 | `-ignore-case` | `true` | Case-insensitive alphabetical comparison |
-| `-default-last` | `true` | Always place the `default` case last |
 | `-autofix` | `true` | Emit suggested fixes (applied with `-fix`) |
 | `-autofix-allow-fallthrough` | `false` | Also emit fixes for switches that use `fallthrough` |
 

@@ -10,7 +10,6 @@ func main() {
 	a := caseorder.NewWithConfig(&cfg)
 
 	a.Flags.StringVar(&cfg.Order, "order", cfg.Order, "sort order (asc or desc)")
-	a.Flags.BoolVar(&cfg.DefaultLast, "default-last", cfg.DefaultLast, "place the default case last")
 	a.Flags.BoolVar(&cfg.Autofix.Enabled, "autofix", cfg.Autofix.Enabled, "emit suggested fixes")
 	a.Flags.BoolVar(&cfg.Autofix.AllowFallthrough, "autofix-allow-fallthrough", cfg.Autofix.AllowFallthrough, "emit suggested fixes for switches with fallthrough")
 
