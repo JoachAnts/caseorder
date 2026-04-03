@@ -1,17 +1,20 @@
 package comments
 
 func comments(x int) {
-    // Switch comment
+	// Switch comment
 	switch x {
 	/**
-    Multi line comment for 1
-    */
+	  Multi line comment for 1
+	*/
 	case 1:
 		/* Comment for 1 */
 		println(1)
-    // Outer comment for 2
+		/* End comment for 1 */
+		// Outer comment for 2
 	case 2:
 		// Comment for 2
 		println(2)
+		// End comment for 2
+		// This should stay here
 	}
 }
