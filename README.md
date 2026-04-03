@@ -1,10 +1,25 @@
-<p align="center">
-  <img src="assets/images/gopher_switchorder.png" alt="switchorder gopher" width="400"/>
-</p>
-
 # switchorder
 
 A Go linter that enforces consistent ordering of `switch` case statements — alphabetically for strings, numerically for integers and floats.
+
+## Install
+
+```sh
+go install github.com/JoachAnts/switchorder/cmd/switchorder@latest
+```
+
+## Usage
+
+```sh
+# Lint all packages in the current module
+switchorder ./...
+
+# Lint a specific package
+switchorder ./internal/handlers
+
+# Apply suggested fixes automatically
+switchorder -fix ./...
+```
 
 ## What it catches
 
@@ -13,9 +28,9 @@ A Go linter that enforces consistent ordering of `switch` case statements — al
 switch fruit {
 case "orange":
     // ...
-case "apple": // case "apple" should come before "orange"
+case "apple": // want: case "apple" should come before "orange"
     // ...
-case "banana": // case "banana" should come before "orange"
+case "banana": // want: case "banana" should come before "orange"
     // ...
 }
 
@@ -32,66 +47,48 @@ case "orange":
 
 It also handles integers, floats, hex literals, negative numbers, multi-value cases, and `fallthrough` chains.
 
-## Installation
+## Use cases
+
+**Code review enforcement** — run in CI to catch unordered switches before they merge:
 
 ```sh
-go install github.com/JoachAnts/switchorder/cmd/switchorder@latest
+switchorder ./... || exit 1
 ```
 
-## Usage
-
-### Standalone
+**Auto-fix on save** — pipe through `gofmt`-style tooling or wire into your editor's on-save hook:
 
 ```sh
+switchorder -fix ./...
+```
+
+**Pre-commit hook** — add to `.git/hooks/pre-commit`:
+
+```sh
+#!/bin/sh
 switchorder ./...
 ```
 
-### golangci-lint
-
-Add to your `.golangci.yml`:
-
-```yaml
-linters:
-  enable:
-    - switchorder
-
-linters-settings:
-  custom:
-    switchorder:
-      path: switchorder.so
-      description: Enforces ordered switch case statements
-      original-url: github.com/JoachAnts/switchorder
-      settings:
-        order: asc
-        comparators:
-          - type: numeric
-          - type: alphabetical
-            ignore-case: true
-        default-last: true
-        autofix:
-          enabled: true
-          allow-fallthrough: false
-```
-
-## Configuration
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `order` | `string` | `asc` | Sort order: `asc` or `desc` |
-| `comparators` | `list` | numeric, alphabetical | Comparators applied in priority order |
-| `comparators[].type` | `string` | — | `numeric` or `alphabetical` |
-| `comparators[].ignore-case` | `bool` | `true` | Case-insensitive string comparison (alphabetical only) |
-| `default-last` | `bool` | `true` | Always place the `default` case last |
-| `autofix.enabled` | `bool` | `true` | Emit suggested fixes |
-| `autofix.allow-fallthrough` | `bool` | `false` | Suggest fixes for switches that contain `fallthrough` |
-
-### CLI flags
-
-All options are also available as flags when using the standalone binary:
+**Ad-hoc audit** — check a single file or subtree when reviewing unfamiliar code:
 
 ```sh
-switchorder -order=asc -ignore-case -default-last -autofix -autofix-allow-fallthrough ./...
+switchorder ./pkg/config/...
 ```
+
+**Descending order** — for switches where largest-first is conventional (e.g. priority levels, HTTP status codes):
+
+```sh
+switchorder -order=desc ./...
+```
+
+## Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-order` | `asc` | Sort direction: `asc` or `desc` |
+| `-ignore-case` | `true` | Case-insensitive string comparison |
+| `-default-last` | `true` | Always place the `default` case last |
+| `-autofix` | `true` | Emit suggested fixes (applied with `-fix`) |
+| `-autofix-allow-fallthrough` | `false` | Also emit fixes for switches that use `fallthrough` |
 
 ## Features
 
@@ -153,7 +150,7 @@ case "venus":
 }
 ```
 
-By default, suggested fixes are not emitted for switches containing `fallthrough` (set `autofix.allow-fallthrough: true` to enable).
+By default, suggested fixes are not emitted for switches containing `fallthrough`. Pass `-autofix-allow-fallthrough` to enable them.
 
 ## License
 
