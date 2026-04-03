@@ -15,6 +15,5 @@ func comments(x int) {
 		/* Comment for 1 */
 		println(1)
 		/* End comment for 1 */
-		// This should stay here
 	}
 }

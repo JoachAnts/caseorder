@@ -10,11 +10,10 @@ func comments(x int) {
 		/* Comment for 1 */
 		println(1)
 		/* End comment for 1 */
-		// Outer comment for 2
+	// Outer comment for 2
 	case 2:
 		// Comment for 2
 		println(2)
 		// End comment for 2
-		// This should stay here
 	}
 }
