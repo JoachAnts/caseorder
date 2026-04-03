@@ -2,6 +2,8 @@
 
 A Go linter that enforces consistent ordering of `switch` case statements — alphabetically for strings, numerically for integers and floats.
 
+I built this while working on a Game Boy emulator. The CPU instruction set has 500+ opcodes, and I was implementing them in a giant switch statement. It was becoming difficult to tell at a glance whether a case was missing or duplicated. If you're building something similar: an emulator, a bytecode interpreter, a compiler, or any other state machine driven by a large switch, this linter keeps things navigable as the case list grows.
+
 ## Install
 
 ```sh
