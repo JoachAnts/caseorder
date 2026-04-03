@@ -4,7 +4,7 @@ func comments(x int) {
 	// Switch comment
 	switch x {
 	/**
-	  Multi line comment for 1
+	Multi line comment for 1
 	*/
 	case 1:
 		/* Comment for 1 */

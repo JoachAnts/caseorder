@@ -385,6 +385,21 @@ func lineStartOffset(src []byte, off int) int {
 	return off
 }
 
+// isPreCaseCommentLine reports whether line (without its trailing newline) is
+// at exactly case-indent level: it starts with caseIndent followed immediately
+// by a non-whitespace character, indicating a comment that belongs to the
+// following case rather than the body of the preceding one.
+func isPreCaseCommentLine(line []byte, caseIndent string) bool {
+	if len(line) <= len(caseIndent) {
+		return false
+	}
+	if !bytes.HasPrefix(line, []byte(caseIndent)) {
+		return false
+	}
+	next := line[len(caseIndent)]
+	return next != ' ' && next != '\t'
+}
+
 // buildFix constructs a SuggestedFix that rewrites the switch body in sorted
 // order. It uses source-text extraction for case bodies so that comments are
 // preserved, and reconstructs headers from the (potentially value-sorted) AST.
@@ -405,14 +420,44 @@ func buildFix(pass *analysis.Pass, sw *ast.SwitchStmt, cases []caseClauseInfo, g
 	firstOff := tf.Offset(origClauses[0].Pos())
 	caseIndent := string(src[lineStartOffset(src, firstOff):firstOff])
 
-	// Compute where each clause's body ends in the source (= start of next
-	// clause's line, or start of the closing-brace line for the last clause).
 	rbraceOff := tf.Offset(sw.Body.Rbrace)
 	rbraceLineStart := lineStartOffset(src, rbraceOff)
+	lbraceOff := tf.Offset(sw.Body.Lbrace)
+
+	// For each clause, find where its pre-case comment block starts by walking
+	// backwards from the case keyword line, collecting lines at exactly
+	// case-indent level. These comments travel with the case when reordered.
+	preCaseStart := make([]int, n)
+	for i := 0; i < n; i++ {
+		caseLineStart := lineStartOffset(src, tf.Offset(origClauses[i].Pos()))
+		stopAt := lbraceOff
+		if i > 0 {
+			stopAt = tf.Offset(origClauses[i-1].Colon)
+		}
+		pos := caseLineStart
+		for pos > 0 {
+			prevEnd := pos - 1 // the '\n' ending the preceding line
+			if src[prevEnd] != '\n' {
+				break
+			}
+			prevStart := lineStartOffset(src, prevEnd)
+			if prevStart <= stopAt {
+				break
+			}
+			if isPreCaseCommentLine(src[prevStart:prevEnd], caseIndent) {
+				pos = prevStart
+			} else {
+				break
+			}
+		}
+		preCaseStart[i] = pos
+	}
+
+	// bodyEnds[i] is where case i's body content ends — the start of the next
+	// case's pre-case block, or the rbrace line for the last case.
 	bodyEnds := make([]int, n)
 	for i := 0; i < n-1; i++ {
-		nextOff := tf.Offset(origClauses[i+1].Pos())
-		bodyEnds[i] = lineStartOffset(src, nextOff)
+		bodyEnds[i] = preCaseStart[i+1]
 	}
 	bodyEnds[n-1] = rbraceLineStart
 
@@ -434,6 +479,11 @@ func buildFix(pass *analysis.Pass, sw *ast.SwitchStmt, cases []caseClauseInfo, g
 	buf.WriteByte('\n')
 	for _, sc := range sortedClauses {
 		idx := origIdx[sc]
+
+		// Write pre-case comments (lines at case-indent level that preceded
+		// this case in the original source).
+		caseLineStart := lineStartOffset(src, tf.Offset(sc.Pos()))
+		buf.Write(src[preCaseStart[idx]:caseLineStart])
 
 		// Write the case header from the AST (reflects any value-sorting).
 		if sc.List == nil {
