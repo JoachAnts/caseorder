@@ -2,7 +2,7 @@
 
 `caseorder` is a Go static analysis linter that enforces consistent ordering of `switch` case statements. String cases are sorted alphabetically; integer and float cases are sorted numerically. Suggested fixes let you auto-correct violations with a single command.
 
-I built this while working on a Game Boy emulator. The CPU instruction set has 500+ opcodes, and I was implementing them in a giant switch statement. It was becoming difficult to tell at a glance whether a case was missing or duplicated. If you're building something similar — an emulator, a bytecode interpreter, a compiler, or any other state machine driven by a large switch — this linter keeps things navigable as the case list grows.
+I built this with Claude Code, while working on a Game Boy emulator. The CPU instruction set has 500+ opcodes, and I was implementing them in a giant switch statement. It was becoming difficult to tell at a glance whether a case was missing or duplicated. If you're building something similar — an emulator, a bytecode interpreter, a compiler, or any other state machine driven by a large switch — this linter keeps things navigable as the case list grows.
 
 ## Install
 
