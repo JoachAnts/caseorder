@@ -1,8 +1,8 @@
-# caseorder
+# caseorder — Go linter to enforce switch case ordering
 
-A Go linter that enforces consistent ordering of `switch` case statements — alphabetically for strings, numerically for integers and floats.
+`caseorder` is a Go static analysis linter that enforces consistent ordering of `switch` case statements. String cases are sorted alphabetically; integer and float cases are sorted numerically. Suggested fixes let you auto-correct violations with a single command.
 
-I built this while working on a Game Boy emulator. The CPU instruction set has 500+ opcodes, and I was implementing them in a giant switch statement. It was becoming difficult to tell at a glance whether a case was missing or duplicated. If you're building something similar: an emulator, a bytecode interpreter, a compiler, or any other state machine driven by a large switch, this linter keeps things navigable as the case list grows.
+I built this while working on a Game Boy emulator. The CPU instruction set has 500+ opcodes, and I was implementing them in a giant switch statement. It was becoming difficult to tell at a glance whether a case was missing or duplicated. If you're building something similar — an emulator, a bytecode interpreter, a compiler, or any other state machine driven by a large switch — this linter keeps things navigable as the case list grows.
 
 ## Install
 
@@ -13,20 +13,20 @@ go install github.com/JoachAnts/caseorder/cmd/caseorder@latest
 ## Usage
 
 ```sh
-# Lint all packages in the current module
+# Check all packages in the current module
 caseorder ./...
 
-# Lint a specific package
+# Check a specific package
 caseorder ./internal/handlers
 
-# Apply suggested fixes automatically
+# Auto-fix all ordering violations
 caseorder -fix ./...
 ```
 
 ## What it catches
 
 ```go
-// Bad — cases are out of order
+// Bad — switch cases are out of alphabetical order
 switch fruit {
 case "orange":
     // ...
@@ -36,7 +36,7 @@ case "banana": // want: case "banana" should come before "orange"
     // ...
 }
 
-// Good
+// Good — cases sorted alphabetically
 switch fruit {
 case "apple":
     // ...
@@ -47,17 +47,17 @@ case "orange":
 }
 ```
 
-It also handles integers, floats, hex literals, negative numbers, multi-value cases, and `fallthrough` chains.
+It also enforces ordering for integers, floats, hex literals, negative numbers, multi-value cases, and `fallthrough` chains.
 
 ## Use cases
 
-**Code review enforcement** — run in CI to catch unordered switches before they merge:
+**CI enforcement** — fail the build when switch cases are out of order:
 
 ```sh
 caseorder ./... || exit 1
 ```
 
-**Auto-fix on save** — pipe through `gofmt`-style tooling or wire into your editor's on-save hook:
+**Auto-fix on save** — wire into your editor's on-save hook or `gofmt`-style pipeline:
 
 ```sh
 caseorder -fix ./...
@@ -70,7 +70,7 @@ caseorder -fix ./...
 caseorder ./...
 ```
 
-**Ad-hoc audit** — check a single file or subtree when reviewing unfamiliar code:
+**Ad-hoc audit** — check a subtree when reviewing unfamiliar code:
 
 ```sh
 caseorder ./pkg/config/...
@@ -87,19 +87,19 @@ caseorder -order=desc ./...
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-order` | `asc` | Sort direction: `asc` or `desc` |
-| `-ignore-case` | `true` | Case-insensitive string comparison |
+| `-ignore-case` | `true` | Case-insensitive alphabetical comparison |
 | `-default-last` | `true` | Always place the `default` case last |
 | `-autofix` | `true` | Emit suggested fixes (applied with `-fix`) |
 | `-autofix-allow-fallthrough` | `false` | Also emit fixes for switches that use `fallthrough` |
 
 ## Features
 
-### Numeric ordering
+### Alphabetical and numeric ordering
 
-Integers, floats, hex literals, and negative numbers are compared by value:
+String cases are sorted alphabetically; integers, floats, hex literals, and negative numbers are compared by numeric value:
 
 ```go
-// Bad
+// Bad — numeric cases out of order
 switch code {
 case 0xFF:
 case 0x0A: // out of order
