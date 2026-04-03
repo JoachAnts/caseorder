@@ -50,3 +50,50 @@ func TestSwitchOrderEdgeCases(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "edgecases")
 }
+
+func TestDescendingStrings(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	cfg.Order = "desc"
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "desc_strings")
+}
+
+func TestDescendingNumbers(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	cfg.Order = "desc"
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "desc_numbers")
+}
+
+func TestDefaultFirst(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	cfg.DefaultLast = false
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "default_first")
+}
+
+func TestCaseSensitive(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	for i := range cfg.Comparators {
+		if cfg.Comparators[i].Type == "alphabetical" {
+			cfg.Comparators[i].IgnoreCase = false
+		}
+	}
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "case_sensitive")
+}
+
+func TestNoAutofix(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	cfg.Autofix.Enabled = false
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "no_autofix")
+}
+
+func TestDescendingDefaultFirst(t *testing.T) {
+	cfg := caseorder.DefaultConfig()
+	cfg.Order = "desc"
+	cfg.DefaultLast = false
+	testdata := analysistest.TestData()
+	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "desc_default_first")
+}

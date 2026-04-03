@@ -1,0 +1,9 @@
+package desc_strings
+
+func descStrings(x string) {
+	switch x {
+	case "zebra":
+	case "orange":
+	case "apple":
+	}
+}

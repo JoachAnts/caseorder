@@ -1,0 +1,9 @@
+package desc_numbers
+
+func descNumbers() {
+	switch 0 {
+	case 3:
+	case 2:
+	case 1:
+	}
+}

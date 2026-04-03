@@ -1,0 +1,17 @@
+package case_sensitive
+
+func caseSensitive(x string) {
+	// "apple" before "Banana": correct case-insensitively (apple < banana),
+	// but wrong case-sensitively ("Banana" has B=66 < a=97, so "Banana" sorts first).
+	switch x {
+	case "apple":
+	case "Banana": // want `case "Banana" should come before "apple"`
+	}
+
+	// "Zebra" before "apple": wrong case-insensitively (zebra > apple),
+	// but correct case-sensitively (Z=90 < a=97, so "Zebra" sorts first).
+	switch x {
+	case "Zebra":
+	case "apple":
+	}
+}

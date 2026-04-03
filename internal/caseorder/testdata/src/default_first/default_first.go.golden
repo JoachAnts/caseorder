@@ -1,0 +1,10 @@
+package default_first
+
+func defaultFirst(x int) {
+	switch x {
+	default:
+		println("default")
+	case 1:
+	case 2:
+	}
+}
