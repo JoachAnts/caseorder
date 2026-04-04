@@ -27,20 +27,14 @@ var Instance AnalyzerPlugin
 
 // Config holds configuration for the caseorder analyzer.
 type Config struct {
-	Order       string        `json:"order"`
-	Comparators []Comparator  `json:"comparators"`
-	Autofix     AutofixConfig `json:"autofix"`
+	Order       string       `json:"order"`
+	Comparators []Comparator `json:"comparators"`
 }
 
 // Comparator defines how to compare case values of a given type.
 type Comparator struct {
 	Type       string `json:"type"`
 	IgnoreCase bool   `json:"ignore-case"`
-}
-
-// AutofixConfig controls the behavior of suggested fixes.
-type AutofixConfig struct {
-	Enabled bool `json:"enabled"`
 }
 
 // DefaultConfig returns the default configuration.
@@ -50,9 +44,6 @@ func DefaultConfig() Config {
 		Comparators: []Comparator{
 			{Type: "numeric"},
 			{Type: "alphabetical", IgnoreCase: true},
-		},
-		Autofix: AutofixConfig{
-			Enabled: true,
 		},
 	}
 }
@@ -352,10 +343,7 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt, cfg Config) {
 	}
 
 	// --- Build suggested fix ---
-	var fix *analysis.SuggestedFix
-	if cfg.Autofix.Enabled {
-		fix = buildFix(pass, sw, cases, groups)
-	}
+	fix := buildFix(pass, sw, cases, groups)
 
 	for _, d := range diagnostics {
 		if fix != nil {

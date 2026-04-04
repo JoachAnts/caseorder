@@ -10,7 +10,6 @@ func main() {
 	a := caseorder.NewWithConfig(&cfg)
 
 	a.Flags.StringVar(&cfg.Order, "order", cfg.Order, "sort order (asc or desc)")
-	a.Flags.BoolVar(&cfg.Autofix.Enabled, "autofix", cfg.Autofix.Enabled, "emit suggested fixes")
 
 	for i := range cfg.Comparators {
 		if cfg.Comparators[i].Type == "alphabetical" {

@@ -78,10 +78,3 @@ func TestCaseSensitive(t *testing.T) {
 	testdata := analysistest.TestData()
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "case_sensitive")
 }
-
-func TestNoAutofix(t *testing.T) {
-	cfg := caseorder.DefaultConfig()
-	cfg.Autofix.Enabled = false
-	testdata := analysistest.TestData()
-	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.NewWithConfig(&cfg), "no_autofix")
-}

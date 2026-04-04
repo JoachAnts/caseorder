@@ -62,11 +62,11 @@ Type switches (`switch v := x.(type)`) are ignored — ordering types has no mea
 
 ## Flags
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-order` | `asc` | Sort direction: `asc` or `desc` |
-| `-ignore-case` | `true` | Case-insensitive alphabetical comparison |
-| `-autofix` | `true` | Emit suggested fixes (applied via `-fix`) |
+| Flag           | Default | Description                              |
+|----------------|---------|------------------------------------------|
+| `-order`       | `asc`   | Sort direction: `asc` or `desc`          |
+| `-ignore-case` | `true`  | Case-insensitive alphabetical comparison |
+| `-fix`         | `false` | Apply suggested fixes                    |
 
 ## Features
 
