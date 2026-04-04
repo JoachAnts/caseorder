@@ -14,16 +14,7 @@ func TestSwitchOrderAlphabetical(t *testing.T) {
 
 func TestSwitchOrderWithFallthrough(t *testing.T) {
 	testdata := analysistest.TestData()
-	// Default config has allow-fallthrough: false, so diagnostics are reported but no fix is suggested.
 	analysistest.RunWithSuggestedFixes(t, testdata, caseorder.Analyzer, "fallthru")
-}
-
-func TestSwitchOrderWithFallthroughAutofix(t *testing.T) {
-	cfg := caseorder.DefaultConfig()
-	cfg.Autofix.AllowFallthrough = true
-	a := caseorder.NewWithConfig(&cfg)
-	testdata := analysistest.TestData()
-	analysistest.RunWithSuggestedFixes(t, testdata, a, "fallthru_autofix")
 }
 
 func TestSwitchOrderNumerical(t *testing.T) {

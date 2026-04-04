@@ -40,8 +40,7 @@ type Comparator struct {
 
 // AutofixConfig controls the behavior of suggested fixes.
 type AutofixConfig struct {
-	Enabled          bool `json:"enabled"`
-	AllowFallthrough bool `json:"allow-fallthrough"`
+	Enabled bool `json:"enabled"`
 }
 
 // DefaultConfig returns the default configuration.
@@ -53,8 +52,7 @@ func DefaultConfig() Config {
 			{Type: "alphabetical", IgnoreCase: true},
 		},
 		Autofix: AutofixConfig{
-			Enabled:          true,
-			AllowFallthrough: false,
+			Enabled: true,
 		},
 	}
 }
@@ -256,15 +254,6 @@ func sortGroups(groups [][]caseClauseInfo, cfg Config) {
 	})
 }
 
-func hasFallthroughGroups(groups [][]caseClauseInfo) bool {
-	for _, g := range groups {
-		if len(g) > 1 {
-			return true
-		}
-	}
-	return false
-}
-
 func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt, cfg Config) {
 	var cases []caseClauseInfo
 
@@ -364,7 +353,7 @@ func processSwitch(pass *analysis.Pass, sw *ast.SwitchStmt, cfg Config) {
 
 	// --- Build suggested fix ---
 	var fix *analysis.SuggestedFix
-	if cfg.Autofix.Enabled && (!hasFallthroughGroups(groups) || cfg.Autofix.AllowFallthrough) {
+	if cfg.Autofix.Enabled {
 		fix = buildFix(pass, sw, cases, groups)
 	}
 

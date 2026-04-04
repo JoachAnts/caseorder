@@ -19,8 +19,17 @@ caseorder ./...
 # Check a specific package
 caseorder ./internal/handlers
 
-# Auto-fix all ordering violations
+# Apply fixes automatically
 caseorder -fix ./...
+
+# Fail the build in CI
+caseorder ./... || exit 1
+
+# Wire into an editor on-save hook
+caseorder -fix ./...
+
+# Descending order (e.g. priority levels, HTTP status codes)
+caseorder -order=desc ./...
 ```
 
 ## What it catches
@@ -51,34 +60,13 @@ It also enforces ordering for integers, floats, hex literals, negative numbers, 
 
 Type switches (`switch v := x.(type)`) are ignored — ordering types has no meaningful definition, so `caseorder` leaves them alone.
 
-## Use cases
-
-**CI enforcement** — fail the build when switch cases are out of order:
-
-```sh
-caseorder ./... || exit 1
-```
-
-**Auto-fix on save** — wire into your editor's on-save hook or `gofmt`-style pipeline:
-
-```sh
-caseorder -fix ./...
-```
-
-**Descending order** — for switches where largest-first is conventional (e.g. priority levels, HTTP status codes):
-
-```sh
-caseorder -order=desc ./...
-```
-
 ## Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-order` | `asc` | Sort direction: `asc` or `desc` |
 | `-ignore-case` | `true` | Case-insensitive alphabetical comparison |
-| `-autofix` | `true` | Emit suggested fixes (applied with `-fix`) |
-| `-autofix-allow-fallthrough` | `false` | Also emit fixes for switches that use `fallthrough` |
+| `-autofix` | `true` | Emit suggested fixes (applied via `-fix`) |
 
 ## Features
 
@@ -87,14 +75,14 @@ caseorder -order=desc ./...
 String cases are sorted alphabetically; integers, floats, hex literals, and negative numbers are compared by numeric value:
 
 ```go
-// Bad — numeric cases out of order
+// Before — numeric cases out of order
 switch code {
 case 0xFF:
 case 0x0A: // out of order
 case -1:   // out of order
 }
 
-// Good
+// After
 switch code {
 case -1:
 case 0x0A:
@@ -107,10 +95,10 @@ case 0xFF:
 Values within a single `case` clause are sorted too:
 
 ```go
-// Bad
+// Before
 case 3, 1, 2:
 
-// Good
+// After
 case 1, 2, 3:
 ```
 
@@ -119,7 +107,7 @@ case 1, 2, 3:
 Cases connected by `fallthrough` are treated as a single unit and sorted together, preserving their internal order:
 
 ```go
-// Bad
+// Before
 switch x {
 case "zebra":
     fallthrough
@@ -129,7 +117,7 @@ case "venus":
 case "apple": // out of order relative to the "zebra" group
 }
 
-// Good
+// After
 switch x {
 case "apple":
 case "zebra":
@@ -139,8 +127,6 @@ case "yacht":
 case "venus":
 }
 ```
-
-By default, suggested fixes are not emitted for switches containing `fallthrough`. Pass `-autofix-allow-fallthrough` to enable them.
 
 ## License
 
