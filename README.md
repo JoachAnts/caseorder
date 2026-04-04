@@ -25,11 +25,11 @@ caseorder -fix ./...
 # Fail the build in CI
 caseorder ./... || exit 1
 
-# Wire into an editor on-save hook
-caseorder -fix ./...
-
 # Descending order (e.g. priority levels, HTTP status codes)
 caseorder -order=desc ./...
+
+# Ignore case
+caseorder -ignore-case ./...
 ```
 
 ## What it catches
